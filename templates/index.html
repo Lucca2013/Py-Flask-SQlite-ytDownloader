@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #ff0000, #ff9900);
+        }
+        
+        h1 {
+            color: #ff0000;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ff0000, transparent);
+        }
+        
+        .form-container {
+            margin: 25px 0;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #ff0000;
+            box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(90deg, #ff0000, #ff5e00);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+            width: 100%;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 0, 0, 0.4);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        button:disabled::after {
+            display: none;
+        }
+        
+        .loading-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 15px;
+        }
+        
+        .loading-text {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 0, 0, 0.2);
+            border-radius: 50%;
+            border-top: 5px solid #ff0000;
+            animation: spin 1s linear infinite;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #ff0000, #ff9900);
+            transition: width 0.3s;
+        }
+        
+        .download-info {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4ff;
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .info-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #0066cc;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo-icon {
+            width: 70px;
+            height: 50px;
+            background: #ff0000;
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 16px solid white;
+        }
+        
+        .logo-text {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-left: 15px;
+            color: #ff0000;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        footer {
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .error {
+            color: #ff0000;
+            margin-top: 15px;
+            padding: 10px;
+            background: #ffecec;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        @media (max-width: 500px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            button {
+                padding: 13px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">Downloader</div>
+        </div>
+        
+        <h1>YouTube Video Downloader</h1>
+        
+        <div class="form-container">
+            <form id="download-form" action="/download" method="post">
+                <input type="text" name="url" id="url" placeholder="Paste YouTube video URL" required>
+                <button type="submit" id="download-btn">
+                    <span id="btn-text">Download Video</span>
+                </button>
+            </form>
+        </div>
+        
+        <div class="error" id="error-message"></div>
+        
+        <div class="loading-container" id="loading">
+            <div class="loading-text">Downloading video...</div>
+            <div class="spinner"></div>
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+        </div>
+        
+        <div class="download-info" id="download-info">
+            <div class="info-title">Download completed!</div>
+            <div id="video-title">Title: </div>
+            <a href="" class="download-link" id="download-link" download>Click here if download doesn't start automatically</a>
+        </div>
+        
+        <footer>
+            <p>© 2023 YouTube Downloader - All rights reserved</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('download-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+    
+        // Get elements
+        const url = document.getElementById('url').value;
+        const loader = document.getElementById('loading');
+        const btn = document.getElementById('download-btn');
+        const errorMsg = document.getElementById('error-message');
+        const progressBar = document.getElementById('progress');
+    
+        // Reset UI
+        errorMsg.style.display = 'none';
+        document.getElementById('download-info').style.display = 'none';
+    
+        // Validate URL
+        if (!/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/.test(url)) {
+            errorMsg.textContent = 'Please enter a valid YouTube URL!';
+            errorMsg.style.display = 'block';
+            return;
+        }   
+    
+        try {
+            // Show loader
+            loader.style.display = 'flex';
+            btn.disabled = true;
+            document.getElementById('btn-text').textContent = 'Processing...';
+        
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progressBar.style.width = (progress += Math.random() * 5) + '%';
+                if (progress >= 95) clearInterval(progressInterval);
+            }, 300);
+        
+            // Send to server
+            const response = await fetch('/download', {
+                method: 'POST',
+                body: new URLSearchParams({ url })
+            });
+        
+            if (!response.ok) throw new Error((await response.json()).error || 'Server error');
+            const data = await response.json();
+        
+            // Get video file
+            const blob = await fetch(`/download_file/${data.filename}`).then(r => r.blob());
+            const downloadUrl = URL.createObjectURL(blob);
+        
+            // Trigger download
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = data.filename;
+            link.click();
+        
+            // Update UI
+            document.getElementById('video-title').textContent = `Title: ${data.title}`;
+            document.getElementById('download-link').href = downloadUrl;
+            progressBar.style.width = '100%';
+        
+            setTimeout(() => {
+                loader.style.display = 'none';
+                document.getElementById('download-info').style.display = 'block';
+                btn.disabled = false;
+                document.getElementById('btn-text').textContent = 'Download Video';
+            }, 1000);
+        
+        } catch (error) {
+            errorMsg.textContent = `Error: ${error.message}`;
+            errorMsg.style.display = 'block';
+            loader.style.display = 'none';
+            btn.disabled = false;
+            document.getElementById('btn-text').textContent = 'Download Video';
+            progressBar.style.width = '0';
+        }
+    });
+</script>
+</body>
+</html>
