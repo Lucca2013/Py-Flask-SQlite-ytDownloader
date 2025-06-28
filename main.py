@@ -13,7 +13,7 @@ if not os.path.exists(DOWNLOAD_FOLDER):
 
 @app.route("/")
 def index():
-    return render_template('index.html')
+    return render_template('index.txt')
 
 @app.route("/download", methods=['POST'])
 def download():
