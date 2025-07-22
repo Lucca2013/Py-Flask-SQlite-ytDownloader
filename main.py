@@ -9,18 +9,15 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-# Configurar a pasta de downloads
 DOWNLOAD_FOLDER = 'downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
     
-# Conexão com o banco de dados
 def get_db_connection():
     conn = sqlite3.connect('downloads/database.db')
     conn.row_factory = sqlite3.Row
     return conn
 
-# Inicializar tabelas
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -72,22 +69,18 @@ def login():
 
 @app.route("/create-account/creating", methods=['POST'])
 def create_account_database():
-    # Recebe os dados do formulário 
     email = request.form.get('email')
     password = request.form.get('password')
     
-    # Validação básica
     if not email or not password:
         return jsonify({'status': 'error', 'message': 'Email e senha são obrigatórios'}), 400
     
     password_hash = hashlib.md5(password.encode()).hexdigest()
     
-    # Conexão com o banco de dados
     try:
         conn = sqlite3.connect('downloads/database.db')
         cursor = conn.cursor()
         
-        # Tenta inserir o novo usuário
         cursor.execute("INSERT INTO usuarios (email, password) VALUES (?, ?)", (email, password_hash))
         conn.commit()
         
@@ -102,11 +95,9 @@ def create_account_database():
 
 @app.route("/login/loging", methods=["POST"])
 def loging():
-    # Recebe os dados do formulário
     email = request.form.get('email')
     password = request.form.get('password')
     
-    # Validação básica
     if not email or not password:
         return jsonify({'status': 'error', 'message': 'Email e senha são obrigatórios'}), 400
     
@@ -115,7 +106,6 @@ def loging():
         conn = sqlite3.connect('downloads/database.db')
         cursor = conn.cursor()
         
-        # Consulta segura usando parâmetros para evitar SQL injection
         cursor.execute("SELECT password FROM usuarios WHERE email = ?", (email,))
         user_data = cursor.fetchone()
         
@@ -126,12 +116,9 @@ def loging():
                 'message': 'Credenciais inválidas'
             }), 401
         
-        # Calcula o hash da senha fornecida
         input_password_hash = hashlib.md5(password.encode()).hexdigest()
         
-        # Verifica a senha (em produção, use hashing!)
         if input_password_hash == user_data[0]:
-            # Login bem-sucedido
             session['logged_in'] = True
             session['email'] = email
             
@@ -144,7 +131,6 @@ def loging():
                 'status': 'success',
             })
         else:
-            # Senha incorreta
             return jsonify({
                 'status': 'error',
                 'message': 'Credenciais inválidas'
@@ -174,17 +160,14 @@ def downloadAccount():
         yt = YouTube(url)
         video = yt.streams.get_highest_resolution()
         
-        # Criar pasta do usuário se não existir
         user_folder = os.path.join(DOWNLOAD_FOLDER, hashlib.md5(session['email'].encode()).hexdigest())
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
         
-        # Nome do arquivo seguro
         title = re.sub(r'[^\w\-_\. ]', '', yt.title)
         filename = f"{title}.mp4"
         filepath = os.path.join(user_folder, filename)
         
-        # Verificar se já existe
         if os.path.exists(filepath):
             return jsonify({
                 'status': 'exists',
@@ -193,10 +176,8 @@ def downloadAccount():
                 'path': f"/download_file/{hashlib.md5(session['email'].encode()).hexdigest()}/{filename}"
             })
         
-        # Fazer download
         video.download(output_path=user_folder, filename=filename)
         
-        # Registrar no histórico
         conn = get_db_connection()
         conn.execute('''
             INSERT INTO historico_downloads 
@@ -218,25 +199,23 @@ def downloadAccount():
 
 @app.route("/logout", methods = ["POST"])
 def logout():
-    session.clear()  # Limpa todos os dados da sessão
+    session.clear() 
     return jsonify({'status': 'success', 'message': 'Logout realizado com sucesso'}), 200
 
 
 @app.route('/download_file/<path:subpath>') #subpath é o que vem depois de dowload_file
 def download_file(subpath):
     try:
-        #se for logado ficará: emailpessoal/video.mp4 se não, apenas video.mp4, ou seja verifica se está logado
+        #if logged in it will be: emailpessoal/video.mp4 if not, just video.mp4, that is, check if you are logged in
         if '/' in subpath:
             user_hash, filename = subpath.split('/', 1)
             if session.get('logged_in'):
-                # Verificar se o hash_user corresponde ao email logado
                 if hashlib.md5(session['email'].encode()).hexdigest() != user_hash:
                     return "Unauthorized", 403
                 filepath = os.path.join(DOWNLOAD_FOLDER, user_hash, filename)
             else:
                 return "Login required", 401
         else:
-            # Download não logado
             filepath = os.path.join(DOWNLOAD_FOLDER, subpath)
         
         if os.path.exists(filepath):
