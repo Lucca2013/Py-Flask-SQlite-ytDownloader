@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta - YouTube Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #ff0000, #ff9900);
+        }
+        
+        h1 {
+            color: #ff0000;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+            position: relative;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #ff0000, transparent);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #ddd;
+            border-radius: 50px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        input[type="email"]:focus,
+        input[type="password"]:focus {
+            border-color: #ff0000;
+            box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.2);
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #ff0000, #ff5e00);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 0, 0, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .login-link {
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        .login-link a {
+            color: #ff0000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: #ff0000;
+            margin-top: 15px;
+            padding: 10px;
+            background: #ffecec;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .logo {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 45px;
+            background: #ff0000;
+            border-radius: 10px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo-icon::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 14px solid white;
+        }
+        
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-left: 12px;
+            color: #ff0000;
+        }
+        
+        @media (max-width: 500px) {
+            .container {
+                padding: 25px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            input[type="email"],
+            input[type="password"] {
+                padding: 12px 18px;
+            }
+            
+            .btn {
+                padding: 13px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">Downloader</div>
+        </div>
+        
+        <h1>Criar Nova Conta</h1>
+        
+        <form id="register-form" action="/create-account" method="post">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" name="password" placeholder="Crie uma senha segura" required minlength="6">
+            </div>
+            
+            <div class="error-message" id="error-message"></div>
+            
+            <button type="submit" class="btn">Criar Conta</button>
+        </form>
+        
+        <div class="login-link">
+            Já tem uma conta? <a href="/login">Faça login</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+    
+        // 1. Obter os dados do formulário
+        const form = e.target;
+        const formData = new FormData(form);
+        const errorElement = document.getElementById('error-message');
+    
+        // 2. Validação básica do cliente
+        if(formData.get('password').length < 6) {
+            errorElement.textContent = 'A senha deve ter pelo menos 6 caracteres';
+            errorElement.style.display = 'block';
+            return;
+        }
+
+
+        // 3. Envio para o backend (apenas esta parte é essencial)
+        try {
+            const response = await fetch("/create-account/creating", {
+                method: 'POST',
+                body: formData
+            });
+        
+            const data = await response.json();
+        
+            if (data.status === 'success') {
+                // Redireciona para a página de login
+                window.location.href = "/login"; 
+            } else {
+                // Mostra mensagem de erro
+                errorElement.textContent = data.message;
+                errorElement.style.display = 'block';
+            }
+        
+        } catch (error) {
+            console.error('Erro na requisição:', error);
+        }
+        });
+    </script>
+</body>
+</html>
