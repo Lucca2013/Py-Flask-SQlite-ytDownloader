@@ -197,6 +197,41 @@ def downloadAccount():
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
+@app.route("/no-account/download", methods=['POST'])
+def download():
+    try:
+        url = request.form['url']
+        yt = YouTube(url)
+        video = yt.streams.get_highest_resolution()
+        
+        user_folder = os.path.join(DOWNLOAD_FOLDER)
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+        
+        title = re.sub(r'[^\w\-_\. ]', '', yt.title)
+        filename = f"{title}.mp4"
+        filepath = os.path.join(user_folder, filename)
+        
+        if os.path.exists(filepath):
+            return jsonify({
+                'status': 'exists',
+                'filename': filename,
+                'title': yt.title,
+                'path': f"{DOWNLOAD_FOLDER}"
+            })
+        
+        video.download(output_path=user_folder, filename=filename)
+        
+        return jsonify({
+            'status': 'success',
+            'filename': filename,
+            'title': yt.title,
+            'path': f"/download_file/{hashlib.md5(session['email'].encode()).hexdigest()}/{filename}"
+        })
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)}), 500
+
 @app.route("/logout", methods = ["POST"])
 def logout():
     session.clear() 
