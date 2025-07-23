@@ -232,7 +232,7 @@ def download():
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
-@app.route("/logout", methods = ["POST"])
+@app.route("/logout", methods = ["GET"])
 def logout():
     session.clear() 
     return jsonify({'status': 'success', 'message': 'Logout realizado com sucesso'}), 200

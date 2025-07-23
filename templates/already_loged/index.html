@@ -646,6 +646,27 @@
         }
 
         window.addEventListener('DOMContentLoaded', carregarHistorico);
+
+        async function logout() {
+            document.getElementById('logout-btn').addEventListener('click', async (e) => {
+                try {
+                    const response = await fetch('/logout');
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        window.location.href = "/";
+                
+                    }
+            
+                }catch (error) {
+                    document.getElementById("history-text").innerHTML = "<p>Erro inesperado.</p>";
+                }   
+            })
+        
+        }
+
+        logout();
+        
     </script>
 
 </body>
