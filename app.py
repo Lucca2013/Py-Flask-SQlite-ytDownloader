@@ -157,7 +157,15 @@ def downloadAccount():
 
     try:
         url = request.form['url']
-        yt = YouTube(url)
+        yt = YouTube(
+            url,
+            use_oauth=True,
+            allow_oauth_cache=True,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "accept-language": "en-US,en;q=0.9",
+            }
+        )
         video = yt.streams.get_highest_resolution()
         
         user_folder = os.path.join(DOWNLOAD_FOLDER, hashlib.md5(session['email'].encode()).hexdigest())
@@ -201,7 +209,15 @@ def downloadAccount():
 def download():
     try:
         url = request.form['url']
-        yt = YouTube(url)
+        yt = YouTube(
+            url,
+            use_oauth=True,
+            allow_oauth_cache=True,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "accept-language": "en-US,en;q=0.9",
+            }
+        )
         video = yt.streams.get_highest_resolution()
         
         user_folder = os.path.join(DOWNLOAD_FOLDER)
