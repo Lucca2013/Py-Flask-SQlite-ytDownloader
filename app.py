@@ -12,7 +12,7 @@ app = Flask(__name__)
 DOWNLOAD_FOLDER = 'downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
-    
+
 def get_db_connection():
     conn = sqlite3.connect('downloads/database.db')
     conn.row_factory = sqlite3.Row
@@ -21,14 +21,14 @@ def get_db_connection():
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             email TEXT PRIMARY KEY,
             password TEXT NOT NULL
         )
     ''')
-    
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS historico_downloads (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -41,7 +41,7 @@ def init_db():
             FOREIGN KEY (usuario_email) REFERENCES usuarios(email) ON DELETE CASCADE
         )
     ''')
-    
+
     conn.commit()
     conn.close()
 
@@ -71,21 +71,21 @@ def login():
 def create_account_database():
     email = request.form.get('email')
     password = request.form.get('password')
-    
+
     if not email or not password:
         return jsonify({'status': 'error', 'message': 'Email e senha são obrigatórios'}), 400
-    
+
     password_hash = hashlib.md5(password.encode()).hexdigest()
-    
+
     try:
         conn = sqlite3.connect('downloads/database.db')
         cursor = conn.cursor()
-        
+
         cursor.execute("INSERT INTO usuarios (email, password) VALUES (?, ?)", (email, password_hash))
         conn.commit()
-        
+
         return jsonify({'status': 'success', 'message': 'Conta criada com sucesso'})
-        
+
     except sqlite3.IntegrityError:
         return jsonify({'status': 'error', 'message': 'Email já cadastrado'}), 400
     except Exception as e:
@@ -97,36 +97,36 @@ def create_account_database():
 def loging():
     email = request.form.get('email')
     password = request.form.get('password')
-    
+
     if not email or not password:
         return jsonify({'status': 'error', 'message': 'Email e senha são obrigatórios'}), 400
-    
-      
+
+
     try:
         conn = sqlite3.connect('downloads/database.db')
         cursor = conn.cursor()
-        
+
         cursor.execute("SELECT password FROM usuarios WHERE email = ?", (email,))
         user_data = cursor.fetchone()
-        
+
         if not user_data:
             # Email não encontrado
             return jsonify({
                 'status': 'error',
                 'message': 'Credenciais inválidas'
             }), 401
-        
+
         input_password_hash = hashlib.md5(password.encode()).hexdigest()
-        
+
         if input_password_hash == user_data[0]:
             session['logged_in'] = True
             session['email'] = email
-            
+
             print("Todos os usuários:")
             cursor.execute("SELECT * FROM usuarios")
             for linha in cursor.fetchall():
                 print(linha)
-            
+
             return jsonify({
                 'status': 'success',
             })
@@ -135,7 +135,7 @@ def loging():
                 'status': 'error',
                 'message': 'Credenciais inválidas'
             }), 401
-            
+
     except sqlite3.Error as db_error:
         return jsonify({
             'status': 'error',
@@ -157,25 +157,17 @@ def downloadAccount():
 
     try:
         url = request.form['url']
-        yt = YouTube(
-            url,
-            use_oauth=True,
-            allow_oauth_cache=True,
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "accept-language": "en-US,en;q=0.9",
-            }
-        )
+        yt = YouTube(url)
         video = yt.streams.get_highest_resolution()
-        
+
         user_folder = os.path.join(DOWNLOAD_FOLDER, hashlib.md5(session['email'].encode()).hexdigest())
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
-        
+
         title = re.sub(r'[^\w\-_\. ]', '', yt.title)
         filename = f"{title}.mp4"
         filepath = os.path.join(user_folder, filename)
-        
+
         if os.path.exists(filepath):
             return jsonify({
                 'status': 'exists',
@@ -183,9 +175,9 @@ def downloadAccount():
                 'title': yt.title,
                 'path': f"/download_file/{hashlib.md5(session['email'].encode()).hexdigest()}/{filename}"
             })
-        
+
         video.download(output_path=user_folder, filename=filename)
-        
+
         conn = get_db_connection()
         conn.execute('''
             INSERT INTO historico_downloads 
@@ -194,14 +186,14 @@ def downloadAccount():
         ''', (session['email'], url, yt.title, yt.video_id, filepath))
         conn.commit()
         conn.close()
-        
+
         return jsonify({
             'status': 'success',
             'filename': filename,
             'title': yt.title,
             'path': f"/download_file/{hashlib.md5(session['email'].encode()).hexdigest()}/{filename}"
         })
-    
+
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
@@ -209,25 +201,17 @@ def downloadAccount():
 def download():
     try:
         url = request.form['url']
-        yt = YouTube(
-            url,
-            use_oauth=True,
-            allow_oauth_cache=True,
-            headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "accept-language": "en-US,en;q=0.9",
-            }
-        )
+        yt = YouTube(url)
         video = yt.streams.get_highest_resolution()
-        
+
         user_folder = os.path.join(DOWNLOAD_FOLDER)
         if not os.path.exists(user_folder):
             os.makedirs(user_folder)
-        
+
         title = re.sub(r'[^\w\-_\. ]', '', yt.title)
         filename = f"{title}.mp4"
         filepath = os.path.join(user_folder, filename)
-        
+
         if os.path.exists(filepath):
             return jsonify({
                 'status': 'exists',
@@ -235,53 +219,62 @@ def download():
                 'title': yt.title,
                 'path': f"{DOWNLOAD_FOLDER}"
             })
-        
+
         video.download(output_path=user_folder, filename=filename)
-        
+
         return jsonify({
             'status': 'success',
             'filename': filename,
             'title': yt.title,
             'path': f"/download_file/{hashlib.md5(session['email'].encode()).hexdigest()}/{filename}"
         })
-    
+
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
+@app.route("/logout", methods = ["POST"])
 @app.route("/logout", methods = ["GET"])
 def logout():
     session.clear() 
     return jsonify({'status': 'success', 'message': 'Logout realizado com sucesso'}), 200
 
 
-@app.route('/download_file/<path:subpath>') #subpath é o que vem depois de dowload_file
-def download_file(subpath):
+@app.route('/download_file/<path:file_request>')
+def download_file(file_request):
     try:
-        #if logged in it will be: emailpessoal/video.mp4 if not, just video.mp4, that is, check if you are logged in
-        if '/' in subpath:
-            user_hash, filename = subpath.split('/', 1)
-            if session.get('logged_in'):
-                if hashlib.md5(session['email'].encode()).hexdigest() != user_hash:
-                    return "Unauthorized", 403
-                filepath = os.path.join(DOWNLOAD_FOLDER, user_hash, filename)
-            else:
-                return "Login required", 401
+        if session.get('logged_in'):
+            print("logged in true")
+            user_hash, filename = file_request.split('/', 1)
+            actual_hash = hashlib.md5(session['email'].encode()).hexdigest()
+            
+            if user_hash != actual_hash:
+                return "Unauthorized - hash não corresponde ao usuário", 403
+                
+            filepath = os.path.join(DOWNLOAD_FOLDER, user_hash, filename)
         else:
-            filepath = os.path.join(DOWNLOAD_FOLDER, subpath)
+            # Usuário não logado - o path é apenas "nome_do_arquivo"
+            filepath = os.path.join(DOWNLOAD_FOLDER, file_request)
         
-        if os.path.exists(filepath):
-            return send_file(filepath, as_attachment=True)
-        
-        return "File not found", 404
+        if not os.path.exists(filepath):
+            return "Arquivo não encontrado", 404
+            
+        return send_file(filepath, as_attachment=True)
     
+    except ValueError:
+        # Isso ocorre se o usuário logado tentar acessar sem o hash/
+        if session.get('logged_in'):
+            return "Formato inválido para usuário logado - deve ser hash/nome_do_arquivo", 400
+        return "Erro no formato da requisição", 400
     except Exception as e:
-        return str(e), 500
+        print("erro no try")
+        return f"Erro no servidor: {str(e)}", 500
+
 
 @app.route("/get-history")
 def get_history():
     if not session.get('logged_in'):
         return jsonify({'status': 'error', 'message': 'Not logged '}), 401
-    
+
     try:
         conn = get_db_connection()
         history = conn.execute('''
@@ -291,16 +284,16 @@ def get_history():
             ORDER BY download_date DESC
         ''', (session['email'],)).fetchall()
         conn.close()
-        
+
         history_list = [{
             'title': item['video_title'],
             'url': item['video_url'],
             'date': item['download_date'],
             'path': f"/download_file/{hashlib.md5(session['email'].encode()).hexdigest()}/{os.path.basename(item['download_path'])}"
         } for item in history]
-        
+
         return jsonify({'status': 'success', 'history': history_list})
-    
+
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
