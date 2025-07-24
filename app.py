@@ -157,7 +157,7 @@ def downloadAccount():
 
     try:
         url = request.form['url']
-        yt = YouTube(url)
+        yt = YouTube(url, use_po_token=True)
         video = yt.streams.get_highest_resolution()
 
         user_folder = os.path.join(DOWNLOAD_FOLDER, hashlib.md5(session['email'].encode()).hexdigest())
@@ -201,7 +201,7 @@ def downloadAccount():
 def download():
     try:
         url = request.form['url']
-        yt = YouTube(url)
+        yt = YouTube(url, use_po_token=True)
         video = yt.streams.get_highest_resolution()
 
         user_folder = os.path.join(DOWNLOAD_FOLDER)
