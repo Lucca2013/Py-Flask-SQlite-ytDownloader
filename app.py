@@ -11,7 +11,7 @@ from pytubefix.exceptions import VideoUnavailable
 app = Flask(__name__)
 
 # Configurações
-DOWNLOAD_FOLDER = 'downloads'
+DOWNLOAD_FOLDER = '/tmp/downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
 
