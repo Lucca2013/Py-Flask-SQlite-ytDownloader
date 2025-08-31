@@ -17,7 +17,7 @@ if not os.path.exists(DOWNLOAD_FOLDER):
 
 # Configuração do banco de dados
 def get_db_connection():
-    conn = sqlite3.connect('downloads/database.db')
+    conn = sqlite3.connect('/tmp/downloads/database.db')
     conn.row_factory = sqlite3.Row
     return conn
 
