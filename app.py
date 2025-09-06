@@ -191,7 +191,9 @@ def downloadAccount():
 def download():
     try:
         url = request.form['url']
+        print(f"Tentando baixar: {url}")  
         result = download_video(url)
+        print(f"Resultado: {result}")  
         if result['status'] == 'error':
             return jsonify(result), 500
         elif result['status'] == 'exists':
@@ -205,6 +207,7 @@ def download():
             'path': f"/download_file/{result['filename']}"
         })
     except Exception as e:
+        print(f"Erro crítico: {str(e)}")  # Log do erro completo
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
 # Other routes
