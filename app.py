@@ -1,13 +1,11 @@
-from pytubefix import YouTube
-from flask import Flask, render_template, request, send_file, jsonify
+from flask import Flask, render_template, request, send_file, jsonify, session, send_from_directory
 import os
 import re
 import sqlite3
-from flask import session
 import hashlib
 from datetime import datetime
-from pytubefix.exceptions import VideoUnavailable
-from flask import send_from_directory
+import yt_dlp
+from yt_dlp.utils import DownloadError
 
 app = Flask(__name__)
 
@@ -54,19 +52,37 @@ def sanitize_filename(title):
 
 def download_video(url, user_folder=None):
     try:
-        yt = YouTube(url, use_po_token=False)
-        video = yt.streams.get_highest_resolution()
+        output_path = user_folder if user_folder else DOWNLOAD_FOLDER
         
-        filename = f"{sanitize_filename(yt.title)}.mp4"
-        filepath = os.path.join(user_folder if user_folder else DOWNLOAD_FOLDER, filename)
+        ydl_opts = {
+            'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+            'format': 'best[height<=1080]',  
+            'merge_output_format': 'mp4',
+            'noplaylist': True,
+            'quiet': True,
+            'no_warnings': True,
+        }
         
-        if os.path.exists(filepath):
-            return {'status': 'exists', 'filename': filename, 'title': yt.title}
-        
-        video.download(output_path=user_folder if user_folder else DOWNLOAD_FOLDER, filename=filename)
-        return {'status': 'success', 'filename': filename, 'title': yt.title, 'video_id': yt.video_id}
-    except VideoUnavailable:
-        return {'status': 'error', 'message': 'Video unavailable'}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            filename = f"{sanitize_filename(info['title'])}.mp4"
+            filepath = os.path.join(output_path, filename)
+            
+            if os.path.exists(filepath):
+                return {'status': 'exists', 'filename': filename, 'title': info['title']}
+            
+            # Download do vídeo
+            ydl.download([url])
+            
+            return {
+                'status': 'success', 
+                'filename': filename, 
+                'title': info['title'], 
+                'video_id': info['id']
+            }
+            
+    except DownloadError as e:
+        return {'status': 'error', 'message': f'Erro no download: {str(e)}'}
     except Exception as e:
         print(f"Erro detalhado no download: {str(e)}")
         print(f"Tipo do erro: {type(e).__name__}")
@@ -103,6 +119,7 @@ def login():
 # Authentication routes
 @app.route("/create-account/creating", methods=['POST'])
 def create_account_database():
+    conn = None
     email = request.form.get('email')
     password = request.form.get('password')
 
@@ -122,7 +139,8 @@ def create_account_database():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 @app.route("/login/loging", methods=["POST"])
 def loging():
@@ -189,6 +207,7 @@ def downloadAccount():
     except Exception as e:
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
+
 @app.route("/no-account/download", methods=['POST'])
 def download():
     try:
@@ -209,10 +228,9 @@ def download():
             'path': f"/download_file/{result['filename']}"
         })
     except Exception as e:
-        print(f"Erro crítico: {str(e)}")  # Log do erro completo
+        print(f"Erro crítico: {str(e)}")
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
-# Other routes
 @app.route("/logout", methods=["GET", "POST"])
 def logout():
     session.clear() 
