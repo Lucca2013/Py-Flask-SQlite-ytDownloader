@@ -54,7 +54,7 @@ def sanitize_filename(title):
 
 def download_video(url, user_folder=None):
     try:
-        yt = YouTube(url, use_po_token=True, visitor_data="")
+        yt = YouTube(url, use_po_token=False)
         video = yt.streams.get_highest_resolution()
         
         filename = f"{sanitize_filename(yt.title)}.mp4"
