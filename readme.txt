@@ -8,4 +8,4 @@ HOW TO USE (programming experience required):
 - Download from: https://python.org
 
 2. Install the necessary libraries (run in the terminal):
-pip install flask pytubefix sqlite3 hashlib
+pip install -r requirements.txt
