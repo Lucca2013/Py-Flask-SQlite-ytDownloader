@@ -54,7 +54,7 @@ def sanitize_filename(title):
 
 def download_video(url, user_folder=None):
     try:
-        yt = YouTube(url, use_po_token=True)
+        yt = YouTube(url, use_po_token=True, visitor_data="")
         video = yt.streams.get_highest_resolution()
         
         filename = f"{sanitize_filename(yt.title)}.mp4"
@@ -68,6 +68,8 @@ def download_video(url, user_folder=None):
     except VideoUnavailable:
         return {'status': 'error', 'message': 'Video unavailable'}
     except Exception as e:
+        print(f"Erro detalhado no download: {str(e)}")
+        print(f"Tipo do erro: {type(e).__name__}")
         return {'status': 'error', 'message': str(e)}
 
 
