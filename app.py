@@ -128,7 +128,6 @@ def create_account():
 def login():
     return render_template('login_true/alreadyhave/index.html')
 
-# Authentication routes
 @app.route("/create-account/creating", methods=['POST'])
 def create_account_database():
     conn = None
