@@ -53,40 +53,52 @@ def sanitize_filename(title):
 def download_video(url, user_folder=None):
     try:
         output_path = user_folder if user_folder else DOWNLOAD_FOLDER
-        
+
         ydl_opts = {
-            'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
-            'format': 'best[height<=1080]',  
-            'merge_output_format': 'mp4',
-            'noplaylist': True,
             'quiet': True,
             'no_warnings': True,
         }
-        
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            filename = f"{sanitize_filename(info['title'])}.mp4"
-            filepath = os.path.join(output_path, filename)
-            
-            if os.path.exists(filepath):
-                return {'status': 'exists', 'filename': filename, 'title': info['title']}
-            
-            # Download do vídeo
-            ydl.download([url])
-            
-            return {
-                'status': 'success', 
-                'filename': filename, 
-                'title': info['title'], 
-                'video_id': info['id']
+
+            # Debug
+            for f in info.get("formats", []):
+                print(f"{f['format_id']} - {f.get('ext')} - {f.get('resolution')} - {f.get('acodec')}")
+
+            ydl_opts = {
+                'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+                'format': 'best[ext=mp4]/best',   
+                'merge_output_format': 'mp4',
+                'noplaylist': True,
+                'quiet': True,
+                'no_warnings': True,
             }
-            
-    except DownloadError as e:
-        return {'status': 'error', 'message': f'Erro no download: {str(e)}'}
+
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            filename = f"{sanitize_filename(info['title'])}.mp4" 
+            filepath = os.path.join(output_path, filename)
+
+            if os.path.exists(filepath):
+                return {'status': 'exists', 'filename': filename, 'title': info['title'], 'video_id': info['id']}
+
+            ydl.download([url])  
+
+            return {
+                'status': 'success',
+                'filename': filename,       
+                'title': info['title'],
+                'video_id': info['id']      
+            }
+
+
     except Exception as e:
-        print(f"Erro detalhado no download: {str(e)}")
-        print(f"Tipo do erro: {type(e).__name__}")
+        print(f"Erro detalhado: {str(e)}")
         return {'status': 'error', 'message': str(e)}
+
+
 
 
 init_db()
@@ -95,7 +107,7 @@ app.secret_key = os.urandom(24)
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
-                              'favicon.ico', mimetype='image/vnd.microsoft.icon')
+        'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 
 @app.route("/")
