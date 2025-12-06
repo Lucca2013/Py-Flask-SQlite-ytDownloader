@@ -53,6 +53,7 @@ def sanitize_filename(title):
 def download_video(url, user_folder=None):
     try:
         output_path = user_folder if user_folder else DOWNLOAD_FOLDER
+        cookies_path = os.path.join(app.root_path, "cookies.txt")
 
         ydl_opts = {
             'quiet': True,
@@ -62,15 +63,12 @@ def download_video(url, user_folder=None):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
-            # Debug
-            for f in info.get("formats", []):
-                print(f"{f['format_id']} - {f.get('ext')} - {f.get('resolution')} - {f.get('acodec')}")
-
             ydl_opts = {
                 'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
                 'format': 'best[ext=mp4]/best',   
                 'merge_output_format': 'mp4',
                 'noplaylist': True,
+                'cookiefile': cookies_path,
                 'quiet': True,
                 'no_warnings': True,
             }
