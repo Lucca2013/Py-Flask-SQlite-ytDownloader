@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, send_file, jsonify, session, send_from_directory
 import os
+from dotenv import load_dotenv
 import re
 import sqlite3
 import hashlib
@@ -10,6 +11,7 @@ from yt_dlp.utils import DownloadError
 app = Flask(__name__)
 
 # Configurations
+load_dotenv()
 DOWNLOAD_FOLDER = '/tmp/downloads'
 if not os.path.exists(DOWNLOAD_FOLDER):
     os.makedirs(DOWNLOAD_FOLDER)
@@ -53,7 +55,7 @@ def sanitize_filename(title):
 def download_video(url, user_folder=None):
     try:
         output_path = user_folder if user_folder else DOWNLOAD_FOLDER
-        cookies_path = os.path.join(app.root_path, "cookies.txt")
+        cookies = os.getenv("COOKIES")
 
         ydl_opts = {
             'quiet': True,
@@ -68,7 +70,7 @@ def download_video(url, user_folder=None):
                 'format': 'best[ext=mp4]/best',   
                 'merge_output_format': 'mp4',
                 'noplaylist': True,
-                'cookiefile': cookies_path,
+                'cookiefile': cookies,
                 'quiet': True,
                 'no_warnings': True,
             }
