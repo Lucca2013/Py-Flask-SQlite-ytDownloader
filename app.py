@@ -55,47 +55,51 @@ def sanitize_filename(title):
 def download_video(url, user_folder=None):
     try:
         output_path = user_folder if user_folder else DOWNLOAD_FOLDER
-        cookies = os.getenv("COOKIES")
+        cookies = os.path.join(app.root_path, "cookies.txt")
+        if not cookies:
+            raise("COOKIES not found")
 
         ydl_opts = {
+            'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+            'format': 'best[ext=mp4]/best',
+            'merge_output_format': 'mp4',
+            'noplaylist': True,
+            'cookiefile': cookies,
             'quiet': True,
             'no_warnings': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['web'],
+                }
+            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
-            ydl_opts = {
-                'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
-                'format': 'best[ext=mp4]/best',   
-                'merge_output_format': 'mp4',
-                'noplaylist': True,
-                'cookiefile': cookies,
-                'quiet': True,
-                'no_warnings': True,
-            }
-
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            filename = f"{sanitize_filename(info['title'])}.mp4" 
+            filename = f"{sanitize_filename(info['title'])}.mp4"
             filepath = os.path.join(output_path, filename)
 
             if os.path.exists(filepath):
-                return {'status': 'exists', 'filename': filename, 'title': info['title'], 'video_id': info['id']}
+                return {
+                    'status': 'exists',
+                    'filename': filename,
+                    'title': info['title'],
+                    'video_id': info['id']
+                }
 
-            ydl.download([url])  
+            ydl.download([url])
 
             return {
                 'status': 'success',
-                'filename': filename,       
+                'filename': filename,
                 'title': info['title'],
-                'video_id': info['id']      
+                'video_id': info['id']
             }
 
-
+    except DownloadError as e:
+        return {'status': 'DownloadError', 'message': str(e)}
     except Exception as e:
-        print(f"Erro detalhado: {str(e)}")
         return {'status': 'error', 'message': str(e)}
 
 
