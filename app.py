@@ -323,4 +323,4 @@ def get_history():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    if os.getenv('FLASK_ENV') == "developement": app.run(debug=True)
