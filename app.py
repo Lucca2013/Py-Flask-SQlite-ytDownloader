@@ -52,10 +52,26 @@ def init_db():
 def sanitize_filename(title):
     return re.sub(r'[^\w\-_\. ]', '', title)
 
+# that funcion is import for deployment, cause in vercel only /tmp is recordable
+def get_cookies_file():
+    src = os.path.join(app.root_path, "cookies.txt")
+    dst = "/tmp/cookies.txt"
+
+    if not os.path.exists(dst):
+        if not os.path.exists(src):
+            raise Exception("cookies.txt not found")
+
+        with open(src, "rb") as f_src:
+            with open(dst, "wb") as f_dst:
+                f_dst.write(f_src.read())
+
+    return dst
+
+
 def download_video(url, user_folder=None):
     try:
         output_path = user_folder if user_folder else DOWNLOAD_FOLDER
-        cookies = os.path.join(app.root_path, "cookies.txt")
+        cookies = get_cookies_file()
         if not cookies:
             raise("COOKIES not found")
 
@@ -70,7 +86,16 @@ def download_video(url, user_folder=None):
             'extractor_args': {
                 'youtube': {
                     'player_client': ['web'],
+                    'skip': ['dash', 'hls'],  
                 }
+            },
+            'http_headers': {
+            'User-Agent': (
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                'AppleWebKit/537.36 (KHTML, like Gecko) '
+                'Chrome/120.0.0.0 Safari/537.36'
+            ),
+            'Accept-Language': 'en-US,en;q=0.9',
             }
         }
 
@@ -227,9 +252,7 @@ def downloadAccount():
 def download():
     try:
         url = request.form['url']
-        print(f"Tentando baixar: {url}")  
         result = download_video(url)
-        print(f"Resultado: {result}")  
         if result['status'] == 'error':
             return jsonify(result), 500
         elif result['status'] == 'exists':
@@ -243,7 +266,7 @@ def download():
             'path': f"/download_file/{result['filename']}"
         })
     except Exception as e:
-        print(f"Erro crítico: {str(e)}")
+        print(f"Error: {str(e)}")
         return jsonify({'status': 'error', 'error': str(e)}), 500
 
 @app.route("/logout", methods=["GET", "POST"])
